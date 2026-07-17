@@ -23,6 +23,7 @@ services:
       - static_volume:/app/staticfiles
     depends_on:
       - web
+    restart: unless-stopped
 
   db:
     image: postgres:16
