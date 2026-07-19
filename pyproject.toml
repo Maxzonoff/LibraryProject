@@ -22,3 +22,24 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^7.0.0"
+
+[tool.flake8]
+max-line-length = 119
+exclude = [
+    "*/migrations/*",
+    "*/__pycache__/*",
+    "*.pyc",
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+]
+ignore = [
+    "E501",  # line too long (используйте max-line-length)
+    "W503",  # line break before binary operator
+    "E203",  # whitespace before ':'
+]
+per-file-ignores = {}
