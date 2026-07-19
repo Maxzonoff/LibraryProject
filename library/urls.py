@@ -1,4 +1,6 @@
 from django.urls import path
+from django.views.generic import RedirectView
+
 from .views import (
     BookListView,
     BookCreateView,
@@ -13,6 +15,7 @@ from .views import (
 app_name = "library"
 
 urlpatterns = [
+    path("", RedirectView.as_view(url="/books/"), name="index"),
     path("authors/", AuthorListView.as_view(), name="authors_list"),
     path("author/new/", AuthorCreateView.as_view(), name="author_create"),
     path("author/update/<int:pk>/", AuthorUpdateView.as_view(), name="author_update"),

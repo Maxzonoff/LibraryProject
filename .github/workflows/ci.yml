@@ -6,6 +6,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: library_project
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 3105
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -29,12 +44,89 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --no-interaction --no-ansi --no-root
+          poetry install --no-interaction --no-ansi
 
       - name: Run migrations
+        env:
+          NAME: library_project
+          USER: postgres
+          PASSWORD: 3105
+          HOST: localhost
         run: |
           poetry run python manage.py migrate
 
       - name: Run tests
+        env:
+          NAME: library_project
+          USER: postgres
+          PASSWORD: 3105
+          HOST: localhost
         run: |
           poetry run python manage.py test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Copy project files to server
+        run: |
+          rsync -avz --exclude "__pycache__" --exclude ".git" --exclude ".env" . ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_DIR }}
+
+      - name: Install dependencies on server using Poetry
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ secrets.DEPLOY_DIR }}
+            
+            # Check if Poetry is installed, install if not
+            if ! command -v poetry &> /dev/null; then
+              curl -sSL https://install.python-poetry.org | python3 -
+              export PATH="$HOME/.local/bin:$PATH"
+            fi
+            
+            # Install dependencies with Poetry
+            poetry install --no-interaction --no-ansi --no-dev
+            
+            # Run migrations
+            poetry run python manage.py migrate
+            
+            # Collect static files (if needed)
+            poetry run python manage.py collectstatic --noinput
+            
+            # Restart your application server (adjust based on your setup)
+            # sudo systemctl restart your-django-app
+            # or
+            # pm2 restart your-app
+            
+          EOF
+          
+
+      - name: Apply migrations on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ secrets.DEPLOY_DIR }}
+            poetry run python manage.py migrate
+          EOF
+
+      - name: Collect static files on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ secrets.DEPLOY_DIR }}
+            poetry run python manage.py collectstatic --noinput
+          EOF
+
+      - name: Restart application
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ secrets.DEPLOY_DIR }}
+            sudo systemctl restart myapp.service
+          EOF
