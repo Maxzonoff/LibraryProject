@@ -1,0 +1,16 @@
+cat > .flake8 << 'EOF'
+[flake8]
+max-line-length = 119
+exclude =
+    migrations,
+    __pycache__,
+    .git,
+    .venv,
+    venv,
+    env,
+    .env,
+    .pytest_cache
+jobs = 1
+statistics = True
+count = True
+EOF

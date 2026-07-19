@@ -12,7 +12,6 @@ class BookService:
         average_rating = total_rating / reviews.count()
         return average_rating
 
-
     @staticmethod
     def is_popular(book_id, threshold=4):
         average_rating = BookService.calculate_average_rating(book_id)

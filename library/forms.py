@@ -26,9 +26,7 @@ class AuthorForm(forms.ModelForm):
         first_name = cleaned_data.get("first_name")
         last_name = cleaned_data.get("last_name")
 
-        if Author.objects.filter(
-            first_name=first_name, last_name=last_name
-        ).exists():
+        if Author.objects.filter(first_name=first_name, last_name=last_name).exists():
             raise ValidationError(
                 "Автор с таким именем и с такой фамилией уже существует."
             )

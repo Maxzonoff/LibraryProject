@@ -32,8 +32,10 @@ class BookAdmin(admin.ModelAdmin):
         "author__last_name",
     )
 
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = (
-        "book", "rating",
+        "book",
+        "rating",
     )
