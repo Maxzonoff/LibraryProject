@@ -1,16 +1,23 @@
 cat > .flake8 << 'EOF'
 [flake8]
 max-line-length = 119
+ignore = E501
 exclude =
-    migrations,
-    __pycache__,
     .git,
     .venv,
     venv,
     env,
     .env,
-    .pytest_cache
+    __pycache__,
+    migrations,
+    static,
+    media,
+    .idea,
+    .DS_Store,
+    *.dump,
+    *.json
 jobs = 1
 statistics = True
 count = True
+show-source = True
 EOF
